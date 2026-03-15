@@ -1,11 +1,14 @@
 import express from 'express';
 import {ENV} from './lib/env.js';
 import authRoutes from './routes/auth.route.js';
-import messageRoutes from './routes/message.route.js';    
+import messageRoutes from './routes/message.route.js';  
+import cookieParser from 'cookie-parser';  
+import { protectRoute } from './middleware/auth.middleware.js';
 const app = express();
 import path from 'path';
 import { connectDB } from './lib/db.js'
 app.use(express.json());
+app.use(cookieParser());
 const PORT = ENV.PORT || 3000;
 const __dirname =  path.resolve();
 app.use('/api/auth', authRoutes);
