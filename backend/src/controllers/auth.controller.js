@@ -99,7 +99,7 @@ export const updateProfile = async (req,res)=>
             {
                 new: true
             }
-        );
+        ).select("-pssword");
         res.status(200).json(updateUser);
 
 
