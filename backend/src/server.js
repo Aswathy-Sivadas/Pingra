@@ -1,5 +1,12 @@
 import express from 'express';
 import {ENV} from './lib/env.js';
+
+// Prevent arcjet HTTP2 connection errors from crashing the server
+process.on('uncaughtException', (err) => {
+    if (err.code === 'ERR_HTTP2_ERROR') return;
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+});
 import authRoutes from './routes/auth.route.js';
 import messageRoutes from './routes/message.route.js';  
 import cookieParser from 'cookie-parser';  
