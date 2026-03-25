@@ -11,13 +11,16 @@ import authRoutes from './routes/auth.route.js';
 import messageRoutes from './routes/message.route.js';  
 import cookieParser from 'cookie-parser';  
 import { protectRoute } from './middleware/auth.middleware.js';
+import cors from  'cors';
 const app = express();
 import path from 'path';
 import { connectDB } from './lib/db.js'
 app.use(express.json());
+app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
 app.use(cookieParser());
 const PORT = ENV.PORT || 3000;
 const __dirname =  path.resolve();
+
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 
