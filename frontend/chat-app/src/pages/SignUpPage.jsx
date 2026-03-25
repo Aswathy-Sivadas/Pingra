@@ -62,14 +62,14 @@ function SignUpPage() {
                   <div>
                     <label className="auth-input-label">Password</label>
                     <div className="relative">
-                      <UserIcon className="auth-input-icon" />
+                      <LockIcon className="auth-input-icon" />
 
                       <input
                         type="password"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="input"
-                        placeholder="*****"
+                        placeholder="*******"
                       />
                     </div>
                   </div>
