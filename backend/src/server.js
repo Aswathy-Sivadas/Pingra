@@ -15,8 +15,9 @@ import cors from  'cors';
 const app = express();
 import path from 'path';
 import { connectDB } from './lib/db.js'
-app.use(express.json());
 app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
 const PORT = ENV.PORT || 3000;
 const __dirname =  path.resolve();
