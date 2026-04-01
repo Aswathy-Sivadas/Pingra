@@ -11,8 +11,8 @@ import authRoutes from './routes/auth.route.js';
 import messageRoutes from './routes/message.route.js';  
 import cookieParser from 'cookie-parser';  
 import { protectRoute } from './middleware/auth.middleware.js';
+import {app, server} from "./lib/socket.js"
 import cors from  'cors';
-const app = express();
 import path from 'path';
 import { connectDB } from './lib/db.js'
 app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
@@ -34,7 +34,7 @@ if(ENV.NODE_ENV==="production")
 }
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     connectDB();
 });
