@@ -2,6 +2,7 @@ import {create} from 'zustand';
 import { axiosInstance } from '../lib/axios';
 import {toast} from "react-hot-toast"
 import {io} from "socket.io-client";
+import { generateKeyPair, getMyKeyPair, rotateKeyPair, getMyPublicKeyB64 } from '../lib/crypto';
 
 
 const BASE_URL = import.meta.env.MODE === "development"? "http://localhost:3000" : "/"
@@ -14,10 +15,26 @@ export const useAuthStore = create((set,get) =>({
     isUpdatingProfile: false,
     socket: null,
     onlineUsers:[],
+    myKeyPair: null,
     checkAuth: async()=>{
         try{
             const res= await axiosInstance.get("/auth/check");
             set({authUser: res.data})
+            // load E2EE key pair from IndexedDB, regenerate if missing
+            let kp = await getMyKeyPair();
+            if(!kp) {
+                const publicKey = await generateKeyPair();
+                kp = await getMyKeyPair();
+                await axiosInstance.put("/auth/update-public-key", { publicKey });
+            } else {
+                // verify local keys match what the server has; re-upload if out of sync
+                const localPub = await getMyPublicKeyB64();
+                if (localPub && localPub !== res.data.publicKey) {
+                    console.log("Key mismatch detected — re-uploading public key");
+                    await axiosInstance.put("/auth/update-public-key", { publicKey: localPub });
+                }
+            }
+            if(kp) set({ myKeyPair: kp });
             get().connectSocket()
         }
         catch(error)
@@ -32,9 +49,14 @@ export const useAuthStore = create((set,get) =>({
     signup: async(data)=>{
         set({isSigningUp: true});
         try{
-            const res= await axiosInstance.post("/auth/signup", data);
+            // generate E2EE key pair and send public key to server
+            const publicKey = await generateKeyPair();
+            const res= await axiosInstance.post("/auth/signup", { ...data, publicKey });
             set({authUser: res.data});
+            const kp = await getMyKeyPair();
+            if(kp) set({ myKeyPair: kp });
             toast.success("Account created successfully!")
+            get().connectSocket()
         }
         catch(error){
             toast.error(error?.response?.data?.message || "Signup failed")
@@ -48,6 +70,22 @@ export const useAuthStore = create((set,get) =>({
         try{
             const res= await axiosInstance.post("/auth/login", data);
             set({authUser: res.data});
+            // load E2EE key pair from IndexedDB, regenerate if missing
+            let kp = await getMyKeyPair();
+            if(!kp) {
+                const publicKey = await generateKeyPair();
+                kp = await getMyKeyPair();
+                // upload new public key to server
+                await axiosInstance.put("/auth/update-public-key", { publicKey });
+            } else {
+                // verify local keys match what the server has; re-upload if out of sync
+                const localPub = await getMyPublicKeyB64();
+                if (localPub && localPub !== res.data.publicKey) {
+                    console.log("Key mismatch detected — re-uploading public key");
+                    await axiosInstance.put("/auth/update-public-key", { publicKey: localPub });
+                }
+            }
+            if(kp) set({ myKeyPair: kp });
             toast.success("logged in successfully!");
             get().connectSocket()
         }
@@ -106,5 +144,17 @@ export const useAuthStore = create((set,get) =>({
     },
     disconnectSocket: ()=>{
         if(get().socket?.connected) get().socket.disconnect();
+    },
+    rotateKeys: async()=>{
+        try {
+            const newPublicKey = await rotateKeyPair();
+            await axiosInstance.put("/auth/update-public-key", { publicKey: newPublicKey });
+            const kp = await getMyKeyPair();
+            if(kp) set({ myKeyPair: kp });
+            toast.success("Encryption keys rotated successfully! Note: old messages cannot be decrypted with new keys.");
+        } catch(error) {
+            console.error("Key rotation failed:", error);
+            toast.error("Key rotation failed");
+        }
     }
 }))

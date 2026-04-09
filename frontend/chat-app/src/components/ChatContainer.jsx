@@ -1,4 +1,4 @@
-import React, { useEffect,useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ChatHeader from './ChatHeader';
 import NoChatHistoryPlaceholder from './NoChatHistoryPlaceholder';
 import { useChatStore } from '../store/useChatStore';
@@ -7,12 +7,17 @@ import MessageInput from './MessageInput';
 import MessagesLoadingSkeleton from './MessagesLoadingSkeleton';
 
 function ChatContainer() {
-    const { selectedUser, getMessagesByUserId, messages, isMessagesLoading } = useChatStore();
+    const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
+    const [suggestedText, setSuggestedText] = useState("");
     const { authUser } = useAuthStore();
     const messageEndRef= useRef(null);
 
     useEffect(() => {
         getMessagesByUserId(selectedUser._id);
+        subscribeToMessages();
+
+        //clean up
+        return()=> unsubscribeFromMessages();
     }, [selectedUser, getMessagesByUserId])
     useEffect(()=>{
         if(messageEndRef.current)
@@ -45,6 +50,12 @@ function ChatContainer() {
                                             className="rounded-lg h-48 object-cover"
                                         />
                                     )}
+                                    {msg.imageDecryptFailed && (
+                                        <div className="rounded-lg h-48 w-48 bg-slate-700/50 flex flex-col items-center justify-center text-slate-400 text-xs gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                            <span>[Encrypted image]</span>
+                                        </div>
+                                    )}
                                     {msg.text && (
                                         <p className="mt-2">{msg.text}</p>
                                     )}
@@ -60,11 +71,11 @@ function ChatContainer() {
                         <div ref={messageEndRef}/>
                     </div>
                 ) : (
-                    <NoChatHistoryPlaceholder name={selectedUser.fullName} />
+                    <NoChatHistoryPlaceholder name={selectedUser.fullName} onSuggestion={setSuggestedText} />
                 )}
             </div>
 
-            <MessageInput/>
+            <MessageInput prefillText={suggestedText} onPrefillConsumed={() => setSuggestedText("")} />
         </div>
     )
 }

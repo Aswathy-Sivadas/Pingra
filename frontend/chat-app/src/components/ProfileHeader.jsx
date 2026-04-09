@@ -1,8 +1,10 @@
 import React from 'react'
 import {useState, useRef} from 'react';
-import {LogOutIcon, VolumeOffIcon, Volume2Icon} from "lucide-react";
+import {LogOutIcon, VolumeOffIcon, Volume2Icon, RefreshCw} from "lucide-react";
 import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
+import { axiosInstance } from '../lib/axios';
+import toast from 'react-hot-toast';
 
 const mouseClickSound = new Audio("/sounds/mouse-click.mp3");
 function ProfileHeader() {
@@ -75,6 +77,25 @@ function ProfileHeader() {
                 >
                     {isSoundEnabled?(<Volume2Icon className="size-5"/>):
                     (<VolumeOffIcon className="size-5"/>)}
+                </button>
+                {/* Temporary: Rotate keys button for testing */}
+                <button
+                  title="Rotate encryption keys"
+                  className="text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-2"
+                  onClick={async ()=>{
+                    try {
+                      const rotate = useAuthStore.getState().rotateKeys;
+                      await rotate();
+                      // fetch updated server user via axiosInstance (has correct baseURL)
+                      const res = await axiosInstance.get('/auth/check');
+                      toast.success('Keys rotated. server keyVersion: ' + (res.data.keyVersion ?? 'unknown'));
+                    } catch (err) {
+                      console.error('Rotate failed:', err);
+                      toast.error('Key rotation failed');
+                    }
+                  }}
+                >
+                  <RefreshCw className="size-5" />
                 </button>
             </div>
         </div>

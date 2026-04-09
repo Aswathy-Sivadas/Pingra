@@ -1,6 +1,11 @@
 import express from 'express';
 import {ENV} from './lib/env.js';
 
+// Allow self-signed / intercepted certs in development (e.g. corporate proxy, antivirus SSL inspection)
+if (ENV.NODE_ENV !== 'production') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 // Prevent arcjet HTTP2 connection errors from crashing the server
 process.on('uncaughtException', (err) => {
     if (err.code === 'ERR_HTTP2_ERROR') return;

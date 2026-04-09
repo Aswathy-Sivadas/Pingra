@@ -20,6 +20,16 @@ const messageSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    iv: {
+      type: String,
+    },
+    imageIv: {
+      type: String,
+    },
+    isEncrypted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

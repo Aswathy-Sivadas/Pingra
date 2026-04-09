@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 import {ENV} from "../lib/env.js";
 import cloudinary from '../lib/cloudinary.js';
+import { invalidateCachedPublicKey } from "../lib/redis.js";
 export const signup =async (req,res)=> {
-    const {fullName, email, password} = req.body;
+    const {fullName, email, password, publicKey} = req.body;
     try{
         if(!fullName || !email || !password)
         {
@@ -27,7 +28,8 @@ export const signup =async (req,res)=> {
         const newUser= new User({
             fullName,
             email,
-            password:hashedPassword
+            password:hashedPassword,
+            publicKey: publicKey || ""
         })
         if(newUser)
         {
@@ -38,7 +40,7 @@ export const signup =async (req,res)=> {
                 fullName: newUser.fullName,
                 email: newUser.email,
                 profilePic: newUser.profilePic,
-
+                publicKey: newUser.publicKey,
             });
 
             try{
@@ -76,6 +78,7 @@ export const login = async (req,res)=>
             fullName: user.fullName,
             email: user.email,
             profilePic: user.profilePic,
+            publicKey: user.publicKey,
         });
     }catch(error){
         console.log("Error in login controller:", error);
@@ -108,5 +111,25 @@ export const updateProfile = async (req,res)=>
     {
         console.log("Error in update profile:", error);
         res.status(500).json({message: "Internal server error"});
+    }
+}
+
+export const updatePublicKey = async (req, res) => {
+    try {
+        const { publicKey } = req.body;
+        if (!publicKey || typeof publicKey !== "string" || publicKey.trim() === "") {
+            return res.status(400).json({ message: "publicKey is required" });
+        }
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { $set: { publicKey }, $inc: { keyVersion: 1 } },
+            { returnDocument: 'after' }
+        ).select("publicKey keyVersion");
+        // Bust the Redis cache so the next getkey call fetches the fresh key from MongoDB
+        await invalidateCachedPublicKey(req.user._id.toString());
+        res.status(200).json({ message: "Public key updated", keyVersion: user.keyVersion });
+    } catch (error) {
+        console.log("Error updating public key:", error);
+        res.status(500).json({ message: "Server error" });
     }
 }

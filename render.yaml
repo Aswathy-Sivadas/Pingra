@@ -1,0 +1,72 @@
+# render.yaml — Render Infrastructure as Code
+# Commit this file to your repo. Render reads it automatically.
+# Docs: https://render.com/docs/infrastructure-as-code
+
+services:
+  # ── Web Service (Express + React SPA) ────────────────────────────────────
+  - type: web
+    name: chatapp
+    env: docker                      # tells Render to use the Dockerfile
+    dockerfilePath: ./Dockerfile     # path relative to repo root
+    plan: free                       # upgrade to "starter" ($7/mo) for no spin-down
+    healthCheckPath: /api/auth/check
+
+    envVars:
+      # ── App ──────────────────────────────────────────────────────────────
+      - key: NODE_ENV
+        value: production
+
+      # PORT is injected by Render automatically — no need to set it here
+
+      # ── MongoDB Atlas ─────────────────────────────────────────────────────
+      # Create a free cluster at https://cloud.mongodb.com
+      # Connection string format: mongodb+srv://user:pass@cluster.mongodb.net/chatapp
+      - key: MONGO_URI
+        sync: false                  # you fill this in Render dashboard
+
+      # ── Auth ──────────────────────────────────────────────────────────────
+      - key: JWT_SECRET
+        generateValue: true          # Render generates a secure random string
+
+      # ── Frontend URL (same origin as backend in production) ───────────────
+      # Render injects RENDER_EXTERNAL_URL automatically — env.js uses it as fallback.
+      # Only set CLIENT_URL if your frontend is on a DIFFERENT domain (e.g. custom domain).
+      # - key: CLIENT_URL
+      #   value: https://your-custom-domain.com
+
+      # ── Email (Resend) ────────────────────────────────────────────────────
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false                  # e.g. no-reply@yourdomain.com
+      - key: EMAIL_FROM_NAME
+        sync: false                  # e.g. ChatApp
+
+      # ── Cloudinary (image uploads) ────────────────────────────────────────
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # ── Arcjet (rate limiting / bot protection) ───────────────────────────
+      - key: ARCJET_KEY
+        sync: false
+      - key: ARCJET_ENV
+        value: LIVE
+
+      # ── Redis ─────────────────────────────────────────────────────────────
+      # Automatically wired to the Redis service below
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: chatapp-redis
+          property: connectionString
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  - type: redis
+    name: chatapp-redis
+    plan: free
+    ipAllowList: []                  # allow connections from Render services only
+    maxmemoryPolicy: allkeys-lru     # evict least-recently-used keys when memory is full

@@ -1,15 +1,37 @@
 import aj from "../lib/arcjet.js";
 import { isSpoofedBot } from "@arcjet/inspect";
 import rateLimit from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import redis from "../lib/redis.js";
 
-// Local fallback rate limiter (used when arcjet can't connect)
-export const localRateLimit = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
+// In-memory limiter — always available, used until Redis is ready
+const inMemoryLimiter = rateLimit({
+    windowMs: 60 * 1000,
     max: 100,
     message: { message: "Rate Limit exceeded. Please try again later." },
     standardHeaders: true,
     legacyHeaders: false,
 });
+
+// Redis-backed limiter — created once when Redis connects, then reused forever
+let redisLimiter = null;
+redis.on("ready", () => {
+    redisLimiter = rateLimit({
+        windowMs: 60 * 1000,
+        max: 100,
+        message: { message: "Rate Limit exceeded. Please try again later." },
+        standardHeaders: true,
+        legacyHeaders: false,
+        store: new RedisStore({
+            sendCommand: (...args) => redis.call(...args),
+        }),
+    });
+});
+redis.on("close", () => { redisLimiter = null; }); // fall back if Redis drops
+
+// Use Redis limiter when available, otherwise in-memory
+export const localRateLimit = (req, res, next) =>
+    (redisLimiter || inMemoryLimiter)(req, res, next);
 
 export const arcjetProtection = async (req, res, next)=>{
     try{
