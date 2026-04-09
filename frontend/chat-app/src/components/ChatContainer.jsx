@@ -76,7 +76,7 @@ function ChatContainer() {
                 )}
             </div>
 
-            <MessageInput prefillText={suggestedText} onPrefillConsumed={() => setSuggestedText("")} />
+            <MessageInput key={suggestedText} initialText={suggestedText} />
         </div>
     )
 }
