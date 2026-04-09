@@ -9,12 +9,12 @@ function MessageInput({ prefillText, onPrefillConsumed }) {
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef= useRef(null);
     const {sendMessage, isSoundEnabled}= useChatStore();
-    useEffect(() => {
-        if (prefillText) {
-            setText(prefillText);
-            onPrefillConsumed?.();
-        }
-    }, [prefillText]);
+    const prevPrefillRef = useRef("");
+    if (prefillText && prefillText !== prevPrefillRef.current) {
+        prevPrefillRef.current = prefillText;
+        setText(prefillText);
+        onPrefillConsumed?.();
+    }
     const handleSendMessage = (e)=>{
         e.preventDefault()
         if(!text.trim() && !imagePreview) return;

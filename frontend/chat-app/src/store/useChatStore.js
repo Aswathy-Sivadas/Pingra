@@ -6,7 +6,7 @@ import { encryptMessage, decryptMessage, encryptImage, decryptImage } from '../l
 
 
 // helper: decrypt a single message using our key pair + the other user's public key
-async function decryptMsg(msg, myKeyPair, otherPublicKey, myId) {
+async function decryptMsg(msg, myKeyPair, otherPublicKey) {
     // decrypt text
     let text = msg.text;
     if (msg.text && msg.iv && myKeyPair && otherPublicKey) {
@@ -33,10 +33,10 @@ async function decryptMsg(msg, myKeyPair, otherPublicKey, myId) {
 }
 
 // helper: decrypt an array of messages
-async function decryptMessages(msgs, myKeyPair, myId, selectedUser) {
+async function decryptMessages(msgs, myKeyPair, selectedUser) {
     if (!myKeyPair || !selectedUser?.publicKey) return msgs;
     return Promise.all(
-        msgs.map((msg) => decryptMsg(msg, myKeyPair, selectedUser.publicKey, myId))
+        msgs.map((msg) => decryptMsg(msg, myKeyPair, selectedUser.publicKey))
     );
 }
 
@@ -88,7 +88,6 @@ export const useChatStore = create((set, get)=>({
         try{
             const res= await axiosInstance.get(`/messages/${userId}`)
             const {myKeyPair} = useAuthStore.getState();
-            const {authUser} = useAuthStore.getState();
             let {selectedUser} = get();
 
             // fetch fresh public key for decryption (don't set selectedUser to avoid re-render loop)
@@ -97,9 +96,10 @@ export const useChatStore = create((set, get)=>({
                 if (keyRes.data.publicKey) {
                     selectedUser = { ...selectedUser, publicKey: keyRes.data.publicKey };
                 }
+            // eslint-disable-next-line no-empty
             } catch {}
 
-            const decrypted = await decryptMessages(res.data, myKeyPair, authUser._id, selectedUser);
+            const decrypted = await decryptMessages(res.data, myKeyPair, selectedUser);
             set({messages: decrypted})
         }
         catch(error){
@@ -166,7 +166,7 @@ export const useChatStore = create((set, get)=>({
         try{
             const res= await axiosInstance.post(`/messages/send/${selectedUser._id}`, encryptedData)
             // replace optimistic msg with server response (decrypted)
-            const decrypted = await decryptMsg(res.data, myKeyPair, recipientPubKey, authUser._id);
+            const decrypted = await decryptMsg(res.data, myKeyPair, recipientPubKey);
             set({messages: messages.concat(decrypted)})
         }
         catch(error){
@@ -191,6 +191,7 @@ export const useChatStore = create((set, get)=>({
             try {
                 const keyRes = await axiosInstance.get(`/messages/key/${selectedUser._id}`);
                 if (keyRes.data.publicKey) otherPubKey = keyRes.data.publicKey;
+            // eslint-disable-next-line no-empty
             } catch {}
 
             let decrypted = newMessage;

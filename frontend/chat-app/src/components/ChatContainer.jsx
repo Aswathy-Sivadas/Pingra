@@ -18,6 +18,7 @@ function ChatContainer() {
 
         //clean up
         return()=> unsubscribeFromMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedUser, getMessagesByUserId])
     useEffect(()=>{
         if(messageEndRef.current)
