@@ -1,6 +1,6 @@
 import React from 'react'
 import { useChatStore } from '../store/useChatStore';
-import { XIcon, Trash2, ShieldCheck } from 'lucide-react';
+import { XIcon, Trash2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';  
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -25,7 +25,15 @@ function ChatHeader() {
         <span>End-to-end encrypted</span>
       </div>
       <div className="flex justify-between items-center py-2.5">
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2">
+        {/* Back button — mobile only */}
+        <button
+          className="md:hidden text-slate-400 hover:text-slate-200 transition-colors p-1 -ml-1"
+          onClick={() => setSelectedUser(null)}
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div className={`avatar ${onlineUsers.includes(selectedUser._id) ? "avatar-online": "avatar-offline"}`}>
             <div className="w-12 rounded-full">
                 <img src={selectedUser.profilePic || "/avatar.png"} alt={selectedUser.fullName}/>
