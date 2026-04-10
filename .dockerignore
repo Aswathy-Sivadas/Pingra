@@ -1,18 +1,9 @@
-# Dependencies — never copy these into the image
 **/node_modules
-
-# Git history isn't needed in the image
 **/.git
 **/.gitignore
-
-# Secrets — never bake env files into images
 **/.env
 **/.env.*
-
-# Local build artifacts (Docker will rebuild them inside the image)
 frontend/chat-app/dist
-
-# Logs, OS noise
 **/*.log
 **/.DS_Store
 **/Thumbs.db
