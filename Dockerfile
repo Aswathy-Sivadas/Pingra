@@ -1,9 +1,7 @@
-# ═══════════════════════════════════════════════════════════════════════════════
 #  Stage 1 — Build the React frontend
 #
 #  We build the frontend SEPARATELY so the final image only contains the
 #  compiled dist/, not node_modules or source. This keeps the image small.
-# ═══════════════════════════════════════════════════════════════════════════════
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
@@ -17,14 +15,10 @@ RUN npm install --prefix frontend/chat-app
 COPY frontend/chat-app/ ./frontend/chat-app/
 RUN npm run build --prefix frontend/chat-app
 # Output: /app/frontend/chat-app/dist/
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
 #  Stage 2 — Production server
 #
 #  Only production backend dependencies + built frontend land in this image.
 #  No devDependencies, no frontend source, no build tools.
-# ═══════════════════════════════════════════════════════════════════════════════
 FROM node:20-alpine
 
 WORKDIR /app
