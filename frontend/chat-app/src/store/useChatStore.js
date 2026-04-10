@@ -234,7 +234,13 @@ export const useChatStore = create((set, get)=>({
         if(!selectedUser) return;
         try {
             await axiosInstance.delete(`/messages/clear/${selectedUser._id}`);
-            set({messages: []});
+            // Remove from chat list immediately and deselect the user
+            const { chats } = get();
+            set({
+                messages: [],
+                chats: chats.filter(c => c._id !== selectedUser._id),
+                selectedUser: null,
+            });
             toast.success("Chat history cleared");
         } catch(error) {
             toast.error(error?.response?.data?.message || "Failed to clear chat");
