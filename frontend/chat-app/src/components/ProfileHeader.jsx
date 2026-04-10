@@ -64,11 +64,11 @@ function ProfileHeader() {
             {/* BUTTONS */}
             <div className="flex gap-4 items-center">
                 {/* LOGOUT BTN */}
-                <button className="text-slate-400 hover:text-slate-200 transition-colors" onClick={logout}>
+                <button title="Log out" className="text-slate-400 hover:text-slate-200 transition-colors" onClick={logout}>
                     <LogOutIcon className="size-5" />
                 </button>
                 {/* SOUND TOGGLE BTN */}
-                <button className="text-slate-400 hover:text-slate-200 transition-colors"
+                <button title={isSoundEnabled ? "Mute sounds" : "Unmute sounds"} className="text-slate-400 hover:text-slate-200 transition-colors"
                 onClick={()=>{
                     mouseClickSound.currentTime =0;
                     mouseClickSound.play().catch((error)=> console.log("Audio play failed:", error));
@@ -80,7 +80,7 @@ function ProfileHeader() {
                 </button>
                 {/* Temporary: Rotate keys button for testing */}
                 <button
-                  title="Rotate encryption keys"
+                  title="Rotate keys"
                   className="text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-2"
                   onClick={async ()=>{
                     try {

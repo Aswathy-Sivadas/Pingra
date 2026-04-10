@@ -2,7 +2,7 @@ import {create} from 'zustand';
 import { axiosInstance } from '../lib/axios';
 import {toast} from "react-hot-toast"
 import {io} from "socket.io-client";
-import { generateKeyPair, getMyKeyPair, rotateKeyPair, getMyPublicKeyB64 } from '../lib/crypto';
+import { generateKeyPair, getMyKeyPair, rotateKeyPair } from '../lib/crypto';
 
 
 const BASE_URL = import.meta.env.MODE === "development"? "http://localhost:3000" : "/"
@@ -20,20 +20,18 @@ export const useAuthStore = create((set,get) =>({
         try{
             const res= await axiosInstance.get("/auth/check");
             set({authUser: res.data})
-            // load E2EE key pair from IndexedDB, regenerate if missing
+            // load E2EE key pair from IndexedDB
             let kp = await getMyKeyPair();
-            if(!kp) {
+            if (!kp) {
+                // No local key — generate one
                 const publicKey = await generateKeyPair();
                 kp = await getMyKeyPair();
-                await axiosInstance.put("/auth/update-public-key", { publicKey });
-            } else {
-                // verify local keys match what the server has; re-upload if out of sync
-                const localPub = await getMyPublicKeyB64();
-                if (localPub && localPub !== res.data.publicKey) {
-                    console.log("Key mismatch detected — re-uploading public key");
-                    await axiosInstance.put("/auth/update-public-key", { publicKey: localPub });
+                // Only upload if server has no key yet (avoids overwriting another device's key)
+                if (!res.data.publicKey) {
+                    await axiosInstance.put("/auth/update-public-key", { publicKey });
                 }
             }
+            // Never overwrite a server key that already exists — prevents key war on deploy/reconnect
             if(kp) set({ myKeyPair: kp });
             get().connectSocket()
         }
@@ -70,21 +68,18 @@ export const useAuthStore = create((set,get) =>({
         try{
             const res= await axiosInstance.post("/auth/login", data);
             set({authUser: res.data});
-            // load E2EE key pair from IndexedDB, regenerate if missing
+            // load E2EE key pair from IndexedDB
             let kp = await getMyKeyPair();
-            if(!kp) {
+            if (!kp) {
+                // No local key — generate one
                 const publicKey = await generateKeyPair();
                 kp = await getMyKeyPair();
-                // upload new public key to server
-                await axiosInstance.put("/auth/update-public-key", { publicKey });
-            } else {
-                // verify local keys match what the server has; re-upload if out of sync
-                const localPub = await getMyPublicKeyB64();
-                if (localPub && localPub !== res.data.publicKey) {
-                    console.log("Key mismatch detected — re-uploading public key");
-                    await axiosInstance.put("/auth/update-public-key", { publicKey: localPub });
+                // Only upload if server has no key yet (avoids overwriting another device's key)
+                if (!res.data.publicKey) {
+                    await axiosInstance.put("/auth/update-public-key", { publicKey });
                 }
             }
+            // Never overwrite a server key that already exists — prevents key war on deploy/reconnect
             if(kp) set({ myKeyPair: kp });
             toast.success("logged in successfully!");
             get().connectSocket()

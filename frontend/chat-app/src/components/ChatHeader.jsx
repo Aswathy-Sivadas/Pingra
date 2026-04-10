@@ -31,6 +31,7 @@ function ChatHeader() {
           className="md:hidden text-slate-400 hover:text-slate-200 transition-colors p-1 -ml-1"
           onClick={() => setSelectedUser(null)}
           aria-label="Back"
+          title="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -52,7 +53,7 @@ function ChatHeader() {
         >
           <Trash2 className="w-5 h-5" />
         </button>
-        <button onClick={() => setSelectedUser(null)}>
+        <button title="Close chat" onClick={() => setSelectedUser(null)}>
           <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer" />
         </button>
       </div>
