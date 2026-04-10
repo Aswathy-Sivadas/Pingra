@@ -168,6 +168,13 @@ export const useChatStore = create((set, get)=>({
             // replace optimistic msg with server response (decrypted)
             const decrypted = await decryptMsg(res.data, myKeyPair, recipientPubKey);
             set({messages: messages.concat(decrypted)})
+
+            // Bubble the selected user to the top of the chat list
+            const { chats } = get();
+            const exists = chats.find(c => c._id === selectedUser._id);
+            if (exists) {
+                set({ chats: [exists, ...chats.filter(c => c._id !== selectedUser._id)] });
+            }
         }
         catch(error){
             set({messages: messages})
@@ -201,6 +208,14 @@ export const useChatStore = create((set, get)=>({
 
             const currentMessages= get().messages;
             set({messages: [...currentMessages, decrypted]})
+
+            // Bubble the sender to the top of the chat list
+            const { chats } = get();
+            const senderId = newMessage.senderId;
+            const senderChat = chats.find(c => c._id === senderId);
+            if (senderChat) {
+                set({ chats: [senderChat, ...chats.filter(c => c._id !== senderId)] });
+            }
 
             if(isSoundEnabled)
             {

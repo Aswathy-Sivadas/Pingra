@@ -104,21 +104,32 @@ export const sendMessage= async (req,res)=>{
 export const getChatPartners = async (req,res)=>{
     try{
         const loggedInUserId = req.user._id;
-        //find all messages where logged in users are either sender or reciever 
+        // Find the latest message timestamp per chat partner
         const messages = await Message.find({
             $or: [{ senderId: loggedInUserId}, {receiverId: loggedInUserId}]
-        })
+        }).sort({ createdAt: -1 });
 
-        const chatPartnerIds = [
-            ...new Set(
-                messages.map((msg)=>
-                msg.senderId.toString()=== loggedInUserId.toString() ? 
-                 msg.receiverId.toString(): msg.senderId.toString()
-                )
-            ),
-        ];
-        const chatPartners = await User.find({_id: {$in:chatPartnerIds}}).select("-password")
-        res.status(200).json(chatPartners)
+        // Build a map of partnerId -> latest message timestamp (preserving order since messages are sorted desc)
+        const latestMap = new Map();
+        for (const msg of messages) {
+            const partnerId = msg.senderId.toString() === loggedInUserId.toString()
+                ? msg.receiverId.toString()
+                : msg.senderId.toString();
+            if (!latestMap.has(partnerId)) {
+                latestMap.set(partnerId, msg.createdAt);
+            }
+        }
+
+        // Partner IDs already ordered by most recent message (Map preserves insertion order)
+        const chatPartnerIds = [...latestMap.keys()];
+
+        const chatPartners = await User.find({_id: {$in:chatPartnerIds}}).select("-password");
+
+        // Re-sort to match the latestMap order (MongoDB $in does not guarantee order)
+        const partnerMap = new Map(chatPartners.map(u => [u._id.toString(), u]));
+        const sorted = chatPartnerIds.map(id => partnerMap.get(id)).filter(Boolean);
+
+        res.status(200).json(sorted);
     }
     catch(error)
     {
