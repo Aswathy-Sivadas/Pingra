@@ -21,9 +21,12 @@ function SignUpPage() {
               <div className="w-full max-w-md">
                 {/* HEADING TEXT */}
                 <div className="text-center mb-8">
-                  <MessageCircleIcon className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <MessageCircleIcon className="w-10 h-10 text-cyan-400" />
+                    <span className="text-3xl font-extrabold text-cyan-400 tracking-wide">Pingra</span>
+                  </div>
                   <h2 className="text-2xl font-bold text-slate-200 mb-2">Create Account</h2>
-                  <p className="text-slate-400">Sign up for a new account</p>
+                  <p className="text-slate-400">Join Pingra — it's free</p>
                 </div>
 
                 {/* FORM */}
@@ -95,7 +98,8 @@ function SignUpPage() {
                   className="w-full h-auto object-contain"
                 />
                 <div className="mt-6 text-center">
-                  <h3 className="text-xl font-medium text-cyan-400">Start Your Journey Today</h3>
+                  <h3 className="text-2xl font-bold text-cyan-400">Pingra</h3>
+                  <p className="text-slate-400 mt-1 text-sm">Start your journey today</p>
 
                   <div className="mt-4 flex justify-center gap-4">
                     <span className="auth-badge">Free</span>

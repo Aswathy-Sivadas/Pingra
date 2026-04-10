@@ -26,6 +26,9 @@ function ProfileHeader() {
     }
   return(
     <div className="p-6 border-b border-slate-700/50">
+      <div className="flex items-center justify-center mb-4">
+        <span className="text-lg font-extrabold text-cyan-400 tracking-wide">Pingra</span>
+      </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* AVATAR */}
